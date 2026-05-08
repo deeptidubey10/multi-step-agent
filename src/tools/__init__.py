@@ -2,5 +2,6 @@
 
 from .sql_tool import SQLTool
 from .python_tool import PythonTool
+from .email_tool import EmailTool
 
-__all__ = ["SQLTool", "PythonTool"]
+__all__ = ["SQLTool", "PythonTool", "EmailTool"]
