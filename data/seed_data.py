@@ -105,8 +105,8 @@ def seed_database(db_path: str = "agent_data.db") -> None:
 
     conn.commit()
     conn.close()
-    print(f"✓ Database seeded at {db_path}")
-    print("  - sales table: 10 products × 4 regions × 4 quarters")
+    print(f"[OK] Database seeded at {db_path}")
+    print("  - sales table: 10 products x 4 regions x 4 quarters")
     print("  - product_logs table: 12-18 log entries for failing products")
     print("  - Q3 2026 North region: Products 6, 7, 8 are underperforming (30-40% of target)")
 

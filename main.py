@@ -43,9 +43,9 @@ def main():
     logger.info(f"User request: {user_request}\n")
 
     # Initialize components
-    planner = TaskPlanner(model="claude-3-5-haiku-20241022")
+    planner = TaskPlanner(model="claude-haiku-4-5-20251001")
     executor = TaskExecutor()
-    aggregator = ResultAggregator(model="claude-3-5-haiku-20241022")
+    aggregator = ResultAggregator(model="claude-haiku-4-5-20251001")
 
     # Set up database
     db_url = os.getenv("DATABASE_URL", "sqlite:///agent_data.db")
@@ -56,7 +56,7 @@ def main():
     executor.register_tool("python_exec", PythonTool.execute_with_output)
     executor.register_tool("email_send", EmailTool.send_email_static)
 
-    logger.info("✓ Tools registered: db_query, python_exec, email_send\n")
+    logger.info("[OK] Tools registered: db_query, python_exec, email_send\n")
 
     # Create orchestrator
     orchestrator = AgentOrchestrator(planner, executor, aggregator, db_path="agent_state.db")
@@ -66,7 +66,10 @@ def main():
     initial_state = AgentState(user_request=user_request)
 
     # Configuration for LangGraph (thread_id for checkpointing)
-    config = {"configurable": {"thread_id": f"run-{str(uuid.uuid4())[:8]}"}}
+    config = {
+        "configurable": {"thread_id": f"run-{str(uuid.uuid4())[:8]}"},
+        "recursion_limit": 50,
+    }
 
     logger.info("=" * 80)
     logger.info("Starting Execution Loop")
@@ -92,30 +95,34 @@ def main():
         final_state = orchestrator.get_state(config)
 
         if final_state.final_output:
-            logger.info("\n📄 FINAL REPORT:")
+            logger.info("\n[FINAL REPORT]")
             logger.info("-" * 80)
-            print(final_state.final_output)
+            try:
+                print(final_state.final_output)
+            except UnicodeEncodeError:
+                # If output contains characters Git Bash can't display, use logger instead
+                logger.info(final_state.final_output)
             logger.info("-" * 80)
 
         # Print audit trail
-        logger.info("\n📊 AUDIT TRAIL:")
+        logger.info("\n[AUDIT TRAIL]")
         logger.info("-" * 80)
         for i, result in enumerate(final_state.step_results, 1):
             if "step_id" in result:
                 logger.info(
                     f"Step {result['step_id']}: {result.get('tool', 'unknown')} "
-                    f"- {'✓' if result.get('success') else '✗'}"
+                    f"- {'[OK]' if result.get('success') else '[FAIL]'}"
                 )
             elif "node" in result:
                 logger.info(f"Node: {result['node']} at {result.get('timestamp')}")
 
         if final_state.is_complete:
-            logger.info("\n✓ Agent completed successfully")
+            logger.info("\n[OK] Agent completed successfully")
         else:
-            logger.info("\n⚠ Agent did not complete (may have hit error limit)")
+            logger.info("\n[WARN] Agent did not complete (may have hit error limit)")
 
         if final_state.errors:
-            logger.info(f"\n⚠ Errors encountered: {len(final_state.errors)}")
+            logger.info(f"\n[WARN] Errors encountered: {len(final_state.errors)}")
             for error in final_state.errors[:3]:
                 logger.info(f"  - {error[:100]}...")
 
