@@ -165,12 +165,24 @@ class AgentOrchestrator:
                     sql_tool = SQLTool(db_url)
                     schema = sql_tool.get_schema()
 
+                    # Also get sample values to show format
+                    sample_quarters = []
+                    try:
+                        result = sql_tool.execute_query("SELECT DISTINCT quarter FROM sales LIMIT 3")
+                        sample_quarters = [r.get('quarter', '') for r in result.get('results', [])]
+                    except Exception:
+                        pass
+
                     schema_lines = ["ACTUAL DATABASE SCHEMA:", ""]
                     for table_name, columns in schema.items():
                         if table_name == "sqlite_sequence":
                             continue
                         cols_str = ", ".join([f"{col_name} ({col_type})" for col_name, col_type in columns.items()])
                         schema_lines.append(f"{table_name}: {cols_str}")
+
+                    if sample_quarters:
+                        schema_lines.append(f"\nExample quarter values: {', '.join(sample_quarters)}")
+                        schema_lines.append("(Always use full format like 'Q3 2026', not just 'Q3')")
 
                     schema_info = "\n".join(schema_lines)
                 except Exception:
