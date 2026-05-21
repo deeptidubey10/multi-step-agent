@@ -66,10 +66,7 @@ def main():
     initial_state = AgentState(user_request=user_request)
 
     # Configuration for LangGraph (thread_id for checkpointing)
-    config = {
-        "configurable": {"thread_id": f"run-{str(uuid.uuid4())[:8]}"},
-        "recursion_limit": 50,
-    }
+    config = {"configurable": {"thread_id": f"run-{str(uuid.uuid4())[:8]}"}}
 
     logger.info("=" * 80)
     logger.info("Starting Execution Loop")

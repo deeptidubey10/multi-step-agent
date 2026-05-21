@@ -56,8 +56,11 @@ Available tools:
   * For top-N queries, use ORDER BY + LIMIT
   * Use SQLite syntax ONLY
   * Reference schema for EXACT column/table names - DO NOT INVENT COLUMNS
+  * Parameters: {"query": "SELECT ... FROM ... WHERE ..."}
 - python_exec: Execute Python code for analysis, calculations, data transformation
+  * Parameters: {"code": "python code here"}
 - email_send: Send an email with subject, body, and recipient
+  * Parameters: {"to": "email@example.com", "subject": "...", "body": "..."}
 
 Safety guidelines:
 - Keep SQL queries focused (use WHERE to narrow scope)
