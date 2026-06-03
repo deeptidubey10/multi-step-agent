@@ -131,7 +131,21 @@ Validates tool outputs against expected schemas and automatically replans if exe
 | Persistence | SQLite | State checkpointing |
 | Observability | LangSmith | Debugging & tracing |
 
-## Development
+## Development with GitHub Copilot
+
+This project uses a **hybrid development approach**:
+- **GitHub Copilot Workspace** - Fast code generation (https://copilot.github.com)
+- **Claude API** - Production execution (Anthropic)
+
+### Quick Start with Copilot
+1. Open https://copilot.github.com
+2. Import this repository
+3. Ask: "Add a tool that does X"
+4. Copilot generates code following established patterns
+5. Test locally with `python main.py`
+6. Commit when ready
+
+See [.github/copilot-instructions.md](.github/copilot-instructions.md) for detailed instructions.
 
 ### Running Tests
 
@@ -178,12 +192,25 @@ Aggregator: Compiles results into polished report
 User gets: Complete analysis + confirmation
 ```
 
+## Documentation
+
+### Essential Files
+- **[CLAUDE.md](CLAUDE.md)** - Architecture decisions, design patterns, and technical context
+- **[.github/copilot-instructions.md](.github/copilot-instructions.md)** - Instructions for GitHub Copilot Workspace
+- **[LANGGRAPH_CONCEPTS.md](LANGGRAPH_CONCEPTS.md)** - Core LangGraph patterns with code references
+
+### Additional Resources (in `docs/`)
+- **[docs/GETTING_STARTED_HYBRID.md](docs/GETTING_STARTED_HYBRID.md)** - Hybrid development setup guide
+- **[docs/HYBRID_DEVELOPMENT.md](docs/HYBRID_DEVELOPMENT.md)** - Complete development workflow
+- **[docs/LANGGRAPH_FLOW.md](docs/LANGGRAPH_FLOW.md)** - Visual Mermaid diagrams of the workflow
+
 ## Contributing
 
 1. Write tests for new features
-2. Follow the component patterns established
-3. Update CLAUDE.md if architecture changes
-4. Ensure all tests pass before submitting
+2. Follow the component patterns established in [CLAUDE.md](CLAUDE.md)
+3. Use GitHub Copilot Workspace for code generation ([see instructions](.github/copilot-instructions.md))
+4. Test locally: `python main.py`
+5. Ensure all tests pass before submitting
 
 ## License
 
