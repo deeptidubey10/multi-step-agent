@@ -1,53 +1,17 @@
 # GitHub Copilot Instructions
 
-## Project Context
+## Purpose
 
-**Multi-Step Task Agent** - A LangGraph-based AI orchestrator for autonomous task execution with self-correction loops and human approval gates.
+This file is for repo-specific Copilot behavior, prompts, and guardrails.
 
-- **Production LLM**: Anthropic Claude (API-based)
-- **Development Environment**: GitHub Copilot Workspace (code generation)
-- **Architecture**: LangGraph state machine with 5 nodes
-- **Key Feature**: Self-correcting workflows on tool failures
+For architecture and system design context, read these first instead of duplicating them here:
+- `CLAUDE.md` for the system overview, workflow, and design patterns
+- `LANGGRAPH_CONCEPTS.md` for LangGraph-specific implementation details
 
----
-
-## Core Architecture (For Copilot to Understand)
-
-### State Machine Flow
-```
-START → PLANNER → EXECUTOR → [ROUTER decides] → END
-                     ↓
-              ┌──────┼──────┬──────┐
-              ↓      ↓      ↓      ↓
-         ERROR   APPROVAL CONTINUE AGGREGATOR
-         HANDLER (gate)    (loop)
-```
-
-### 5 Node Types
-1. **Planner Node** (`_planner_node`)
-   - Input: `user_request`, optional `schema_info` (for replanning)
-   - Output: `steps[]`, `current_step_index=0`
-   - Uses: Claude API to decompose requests into task plans
-
-2. **Executor Node** (`_executor_node`)
-   - Input: `steps[]`, `current_step_index`
-   - Output: `step_results[]` (append), `current_step_index++`
-   - Uses: Registered tools (db_query, python_exec, etc.)
-
-3. **Error Handler Node** (`_error_handler_node`)
-   - Input: `last_error`, optionally fetches schema context
-   - Output: `errors[]` (append), `current_step_index=0`, `replanning_count++`
-   - Triggers: Conditional router when `step.success == False`
-
-4. **Approval Node** (`_approval_node`)
-   - Input: `step_results[-1]` (last step)
-   - Output: `current_step_index++`
-   - Triggers: When tool == "email_send" (human review gate)
-
-5. **Aggregator Node** (`_aggregator_node`)
-   - Input: All `step_results[]`, `user_request`
-   - Output: `final_output` (polished report)
-   - Uses: Claude API to compile results
+Project shorthand for Copilot:
+- Production execution uses the Anthropic Claude API
+- Copilot is used for code generation and review in the development workflow
+- Preserve the existing LangGraph planner/executor/error-recovery/approval flow unless the user explicitly asks for an architecture change
 
 ---
 
