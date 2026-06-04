@@ -7,7 +7,7 @@ from anthropic import Anthropic
 class ResultAggregator:
     """Aggregates task step results into a final formatted report."""
 
-    def __init__(self, model: str = "claude-3-5-haiku-20241022"):
+    def __init__(self, model: str = "claude-haiku-4-5-20251001"):
         """Initialize the aggregator with LLM client."""
         self.client = Anthropic()
         self.model = model
@@ -84,9 +84,9 @@ Provide a well-formatted, professional report that answers the original request 
             lines.append(f"## Step {i}: {result.get('description', 'No description')}\n")
 
             if result.get("success"):
-                lines.append("**Status**: ✓ Success\n")
+                lines.append("**Status**: [OK] Success\n")
             else:
-                lines.append("**Status**: ✗ Failed\n")
+                lines.append("**Status**: [FAILED]\n")
 
             if result.get("output"):
                 lines.append(f"**Output**:\n```\n{result['output']}\n```\n")

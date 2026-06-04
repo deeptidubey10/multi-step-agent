@@ -1,5 +1,6 @@
 """SQLTool - Wrapper for database query execution with token/size limits."""
 
+import os
 import pandas as pd
 from sqlalchemy import create_engine, text
 from typing import Any
@@ -21,6 +22,14 @@ class SQLTool:
             row_limit: Maximum rows per query (default 1000)
             size_limit_mb: Maximum result size in MB (default 10)
         """
+        # Handle relative SQLite paths - convert to absolute
+        if database_url.startswith("sqlite:///") and not database_url.startswith("sqlite:////"):
+            db_path = database_url.replace("sqlite:///", "")
+            if not os.path.isabs(db_path):
+                # Convert relative path to absolute
+                abs_path = os.path.abspath(db_path)
+                database_url = f"sqlite:///{abs_path}"
+
         self.engine = create_engine(database_url)
         self.row_limit = row_limit
         self.size_limit_mb = size_limit_mb

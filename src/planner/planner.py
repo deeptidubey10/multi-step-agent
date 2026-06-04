@@ -34,20 +34,41 @@ When given a user request, you must:
 5. Order the steps logically, respecting dependencies
 6. Provide clear descriptions for each step
 
+CRITICAL SQL RULES:
+- ONLY use column names and table names that actually exist in the provided schema
+- Reference the provided schema - use EXACTLY those column names, no others
+- Use ONLY SQLite syntax (no MySQL functions like QUARTER(), YEAR(), CURDATE(), strftime())
+- If schema shows a quarter TEXT column with values like "Q3 2026", use: WHERE quarter = 'Q3 2026'
+- Never assume columns like order_date, order_id, sales_date, transaction_date exist - use schema
+- Never query non-existent tables like "products", "checkpoints", "logs" unless in schema
+
+SQL EXAMPLES FOR COMMON PATTERNS:
+If schema has: sales(product_id, product_name, region, quarter, revenue, target)
+- Get top 3 products by lowest revenue in North region for Q3 2026:
+  SELECT product_id, product_name, region, revenue FROM sales
+  WHERE region = 'North' AND quarter = 'Q3 2026'
+  ORDER BY revenue ASC LIMIT 3
+
 Available tools:
 - db_query: Execute SQL SELECT queries and return results
   * IMPORTANT: Always include LIMIT clauses (typically LIMIT 1000)
   * Use WHERE clauses to filter data instead of returning all rows
   * For top-N queries, use ORDER BY + LIMIT
-  * If you need ALL data, explicitly document why in the step description
+  * Use SQLite syntax ONLY
+  * Reference schema for EXACT column/table names - DO NOT INVENT COLUMNS
+  * Parameters: {"query": "SELECT ... FROM ... WHERE ..."}
 - python_exec: Execute Python code for analysis, calculations, data transformation
+  * Parameters: {"code": "python code here"}
 - email_send: Send an email with subject, body, and recipient
+  * Parameters: {"to": "email@example.com", "subject": "...", "body": "..."}
 
 Safety guidelines:
 - Keep SQL queries focused (use WHERE to narrow scope)
 - Use LIMIT 1000 by default unless specifically told otherwise
 - For large datasets, use aggregation (COUNT, SUM, AVG) instead of fetching all rows
 - If a query might be large, prefer TOP-N approaches with ORDER BY
+- MATCH COLUMN NAMES EXACTLY - never invent or assume columns
+- No MySQL functions - use SQLite comparisons and functions only
 
 Always output a structured plan with ordered steps. Each step should have:
 - step_id: sequential integer starting from 1
@@ -60,12 +81,12 @@ Always output a structured plan with ordered steps. Each step should have:
 class TaskPlanner:
     """LLM-based task planner that decomposes requests into structured steps."""
 
-    def __init__(self, model: str = "claude-3-5-haiku-20241022"):
+    def __init__(self, model: str = "claude-haiku-4-5-20251001"):
         """Initialize the planner with an Anthropic client."""
         self.client = Anthropic()
         self.model = model
 
-    def plan(self, user_request: str, available_tools: list[str]) -> TaskPlan:
+    def plan(self, user_request: str, available_tools: list[str], schema_info: str = None) -> TaskPlan:
         """
         Decompose a user request into a structured task plan.
 
@@ -74,10 +95,22 @@ class TaskPlanner:
         Args:
             user_request: The high-level user request
             available_tools: List of available tool names (for reference)
+            schema_info: Optional database schema context for replanning after errors
 
         Returns:
             TaskPlan: Structured plan with ordered steps
         """
+        user_message = f"""Create a task plan for the following request:
+
+{user_request}
+
+Available tools: {', '.join(available_tools)}
+
+Break down the request into concrete steps, with dependencies clearly marked."""
+
+        if schema_info:
+            user_message += f"\n\n{schema_info}\n\nIMPORTANT: Use ONLY the exact table and column names listed above in your SQL queries. Do NOT invent or assume column names."
+
         message = self.client.messages.create(
             model=self.model,
             max_tokens=2048,
@@ -136,13 +169,7 @@ class TaskPlanner:
             messages=[
                 {
                     "role": "user",
-                    "content": f"""Create a task plan for the following request:
-
-{user_request}
-
-Available tools: {', '.join(available_tools)}
-
-Break down the request into concrete steps, with dependencies clearly marked.""",
+                    "content": user_message,
                 }
             ],
         )
